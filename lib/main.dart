@@ -54,7 +54,7 @@ class MyApp extends StatelessWidget {
       ],
       child: const MaterialApp(
         debugShowCheckedModeBanner: false,
-        home:  PlayVideoFromYoutube(videoUrl: 'https://www.youtube.com/watch?v=xKYd4vFwdA8',)
+        home:  PlayVideoFromYoutube(videoUrl: 'https://www.youtube.com/watch?v=yHioWLdgnMI',)
       ),
     );
   }

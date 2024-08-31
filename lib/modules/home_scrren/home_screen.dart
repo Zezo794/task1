@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -78,7 +79,7 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
         _chewieController = ChewieController(
           videoPlayerController: _videoPlayerController,
           aspectRatio: _videoPlayerController.value.aspectRatio,
-          autoPlay: true,
+          autoPlay: !kIsWeb,
           looping: false,
           showControlsOnInitialize: false,
           systemOverlaysOnEnterFullScreen: [],
