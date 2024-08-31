@@ -49,12 +49,12 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) {
-          return AppCubit()..connectToMqtt();
+          return AppCubit();
         }),
       ],
       child: const MaterialApp(
         debugShowCheckedModeBanner: false,
-        home:  PlayVideoFromYoutube(videoUrl: 'https://www.youtube.com/watch?v=A3ltMaM6noM',)
+        home:  PlayVideoFromYoutube(videoUrl: 'https://www.youtube.com/watch?v=xKYd4vFwdA8',)
       ),
     );
   }

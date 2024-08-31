@@ -21,7 +21,7 @@ class PlayVideoFromYoutube extends StatefulWidget {
 class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
   late ChewieController _chewieController;
   late VideoPlayerController _videoPlayerController;
-  final player = AudioPlayer();
+  late AudioPlayer player ;
 
   @override
   void initState() {
@@ -42,7 +42,7 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
         Uri.parse(qualityUrl),
         videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
       );
-      // Initialize the audio player
+      player = AudioPlayer();
       await player.setUrl(cubit.selectedAudioQuality);
 
       try {
@@ -55,7 +55,7 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
               _pause();
             }
             final videoPosition = _videoPlayerController.value.position;
-            if (videoPosition > player.position + const Duration(seconds: 5) || player.position > videoPosition + const Duration(seconds: 5)) {
+            if (videoPosition > player.position + const Duration(seconds: 1) || player.position > videoPosition + const Duration(seconds: 1)) {
               player.seek(videoPosition);
             }
               if(_videoPlayerController.value.volume == 0.0){
@@ -64,6 +64,14 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
             if(_videoPlayerController.value.volume != 0.0){
                 player.setVolume(1);
               }
+
+            if(_videoPlayerController.value.volume != 0.0){
+              player.setVolume(1);
+            }
+
+            if (_videoPlayerController.value.playbackSpeed != player.speed) {
+              player.setSpeed(_videoPlayerController.value.playbackSpeed);
+            }
           }
         });
 
@@ -108,19 +116,28 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
     showDialog(
       context: context,
       builder: (context) {
+
+        final Set<String> uniqueQualitySet = {};
+
+
+        final uniqueQualities = cubit.videoQualities.where((quality) {
+          return uniqueQualitySet.add(quality['quality']!);
+        }).toList();
+
         return AlertDialog(
           title: const Text('Select Video Quality'),
           content: DropdownButton<String>(
             value: cubit.selectedVideoQuality['quality'],
             onChanged: (String? newQuality) {
               if (newQuality != null) {
+                player.dispose();
                 cubit.changInitializePlayerData(false);
                 cubit.changeVideoQuality(newQuality);
                 _initializePlayer();
-                Navigator.of(context).pop(); // Close the dialog after selection
+                Navigator.of(context).pop();
               }
             },
-            items: cubit.videoQualities
+            items: uniqueQualities
                 .map((quality) => DropdownMenuItem(
               value: quality['quality'],
               child: Text(quality['quality']!),
@@ -130,6 +147,7 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
         );
       },
     );
+
   }
 
   @override
