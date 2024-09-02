@@ -25,7 +25,8 @@ void main() async {
 
   DioHelper.init();
   await CashHelper.init();
-  runApp(const MyApp());
+  String videoUrl='https://www.youtube.com/watch?v=I-sXTIF-Gc0';
+  runApp( MyApp( videoUrl: videoUrl,));
 }
 
 
@@ -38,7 +39,8 @@ void main() async {
 
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final String videoUrl;
+  const MyApp({super.key, required this.videoUrl});
 
 
 
@@ -49,12 +51,12 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) {
-          return AppCubit();
+          return AppCubit()..getVideoThumbnail(videoUrl);
         }),
       ],
-      child: const MaterialApp(
+      child:  MaterialApp(
         debugShowCheckedModeBanner: false,
-        home:  PlayVideoFromYoutube(videoUrl: 'https://www.youtube.com/watch?v=yHioWLdgnMI',)
+        home:  PlayVideoFromYoutube(videoUrl: videoUrl,)
       ),
     );
   }

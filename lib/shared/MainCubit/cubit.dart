@@ -16,16 +16,28 @@ class AppCubit extends Cubit<AppState> {
     return BlocProvider.of(context);
   }
 
-
+  bool changeQuality=false;
+  bool showThumbnail=true;
+  var yt = YoutubeExplode();
   bool fetchQuality = false;
   bool initializePlayerData=false;
   List<Map<String, String>> videoQualities = [];
   String selectedAudioQuality = '';
   Map<String, String> selectedVideoQuality = {'': ''};
+  String videoThumbnail='' ;
 
+  Future<void> getVideoThumbnail(String videoUrl) async {
+    var videoId = VideoId.parseVideoId(videoUrl);
+    videoThumbnail= 'https://img.youtube.com/vi/$videoId/0.jpg';
+    emit(GetVideoThumbnailSuccessState());
+  }
+  void changeShowThumbnail(val){
+    showThumbnail=val;
+    emit(ChangeShowThumbnailSuccessState());
+  }
   Future<void> fetchVideoQualities(String videoUrl) async {
     emit(FetchVideoQualitiesLoadingState());
-    var yt = YoutubeExplode();
+
 
     try {
       var videoId = VideoId.parseVideoId(videoUrl);
@@ -34,7 +46,8 @@ class AppCubit extends Cubit<AppState> {
       // Clear the previous list
       videoQualities.clear();
 
-      // Debug print manifest to check available qualities
+
+
 
       for (var video in manifest.videoOnly) {
         videoQualities.add({
@@ -71,6 +84,7 @@ class AppCubit extends Cubit<AppState> {
     );
     selectedVideoQuality =
     {'url': streamInfo['url']!, 'quality': streamInfo['quality']!};
+    changeQuality=true;
     emit(ChangeVideoQualitySuccessState());
   }
 

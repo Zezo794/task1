@@ -23,7 +23,7 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
   late ChewieController _chewieController;
   late VideoPlayerController _videoPlayerController;
   late AudioPlayer player ;
-
+  late Timer _durationTimer;
   @override
   void initState() {
     super.initState();
@@ -34,8 +34,16 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
     });
   }
 
+
+
   Future<void> _initializePlayer() async {
     var cubit = AppCubit.get(context);
+    cubit.changInitializePlayerData(false);
+
+    var currentVideoPosition = const Duration();
+    if (cubit.changeQuality) {
+      currentVideoPosition = _videoPlayerController.value.position;
+    }
 
     final qualityUrl = cubit.selectedVideoQuality['url']!;
     if (qualityUrl.isNotEmpty) {
@@ -43,33 +51,40 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
         Uri.parse(qualityUrl),
         videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
       );
+
       player = AudioPlayer();
       await player.setUrl(cubit.selectedAudioQuality);
 
       try {
         await _videoPlayerController.initialize();
+
+
+
         _videoPlayerController.addListener(() {
           if (_videoPlayerController.value.isInitialized) {
             if (_videoPlayerController.value.isPlaying) {
               _play();
-            } else if (!_videoPlayerController.value.isPlaying) {
+            } else {
               _pause();
             }
+
+            if (_videoPlayerController.value.isBuffering) {
+              _pause();
+            }
+
             final videoPosition = _videoPlayerController.value.position;
-            if (videoPosition > player.position + const Duration(seconds: 1) || player.position > videoPosition + const Duration(seconds: 1)) {
+            final audioPosition = player.position;
+
+            // Synchronize audio and video positions
+            if (videoPosition > audioPosition + const Duration(seconds: 1) ||
+                audioPosition > videoPosition + const Duration(seconds: 1)) {
               player.seek(videoPosition);
             }
-              if(_videoPlayerController.value.volume == 0.0){
-                player.setVolume(0);
-              }
-            if(_videoPlayerController.value.volume != 0.0){
-                player.setVolume(1);
-              }
 
-            if(_videoPlayerController.value.volume != 0.0){
-              player.setVolume(1);
-            }
+            // Synchronize volume between video and audio
+            player.setVolume(_videoPlayerController.value.volume == 0.0 ? 0 : 1);
 
+            // Synchronize playback speed between video and audio
             if (_videoPlayerController.value.playbackSpeed != player.speed) {
               player.setSpeed(_videoPlayerController.value.playbackSpeed);
             }
@@ -90,12 +105,30 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
           ],
         );
 
+        if (cubit.changeQuality) {
+          // Seek to the stored positions after initialization
+          await _videoPlayerController.seekTo(currentVideoPosition);
+          await player.seek(currentVideoPosition);
+        }
+        // _durationTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
+        //   final videoPosition = _videoPlayerController.value.position;
+        //   final audioPosition = player.position;
+        //
+        //   print('Video position: $videoPosition');
+        //   print('Audio position: $audioPosition');
+        //
+        //   final delay = videoPosition - audioPosition;
+        //   print('Delay between video and audio: $delay');
+        // });
+
         cubit.changInitializePlayerData(true);
       } catch (e) {
-        //print('Error initializing video player: $e');
+        // Handle the error (e.g., log it or show a message to the user)
+        print('Error initializing video player: $e');
       }
     }
   }
+
 
   void _play() async {
     await player.play();
@@ -131,6 +164,7 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
             value: cubit.selectedVideoQuality['quality'],
             onChanged: (String? newQuality) {
               if (newQuality != null) {
+                player.stop();
                 player.dispose();
                 cubit.changInitializePlayerData(false);
                 cubit.changeVideoQuality(newQuality);
@@ -176,6 +210,7 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
         }
       },
       builder: (context, state) {
+
         return Scaffold(
           backgroundColor: Colors.black,
           body: cubit.fetchQuality && cubit.initializePlayerData

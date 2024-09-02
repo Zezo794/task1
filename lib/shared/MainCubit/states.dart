@@ -18,4 +18,11 @@
  class ChangInitializePlayerDataSuccessState extends AppState{}
 
 
+ class GetVideoThumbnailSuccessState extends AppState{}
+
+ class ChangeShowThumbnailSuccessState extends AppState{}
+
+
+
+
 
