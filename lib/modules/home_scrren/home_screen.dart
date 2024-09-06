@@ -24,6 +24,7 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
   late VideoPlayerController _videoPlayerController;
   late AudioPlayer player ;
   late Timer _durationTimer;
+
   @override
   void initState() {
     super.initState();
@@ -53,16 +54,16 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
       );
 
       player = AudioPlayer();
-      await player.setUrl(cubit.selectedAudioQuality);
+
 
       try {
         await _videoPlayerController.initialize();
-
-
+        await player.setUrl(cubit.selectedAudioQuality);
 
         _videoPlayerController.addListener(() {
-          if (_videoPlayerController.value.isInitialized) {
+          if (_videoPlayerController.value.isInitialized ) {
             if (_videoPlayerController.value.isPlaying) {
+
               _play();
             } else {
               _pause();
@@ -103,23 +104,40 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
             DeviceOrientation.landscapeRight,
             DeviceOrientation.landscapeLeft,
           ],
+          customControls: null,
+          additionalOptions: (context) {
+            return [
+              OptionItem(
+                onTap: () {
+
+                  _showQualityDropdown();
+                },
+                iconData: Icons.settings,
+                title: 'Change Quality',
+              ),
+            ];
+          },
         );
 
+
+
         if (cubit.changeQuality) {
-          // Seek to the stored positions after initialization
+
           await _videoPlayerController.seekTo(currentVideoPosition);
           await player.seek(currentVideoPosition);
+
         }
-        // _durationTimer = Timer.periodic(const Duration(seconds: 5), (timer) {
-        //   final videoPosition = _videoPlayerController.value.position;
-        //   final audioPosition = player.position;
-        //
-        //   print('Video position: $videoPosition');
-        //   print('Audio position: $audioPosition');
-        //
-        //   final delay = videoPosition - audioPosition;
-        //   print('Delay between video and audio: $delay');
-        // });
+        _durationTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          final videoPosition = _videoPlayerController.value.position;
+          final audioPosition = player.position;
+
+          print('Video position: $videoPosition');
+          print('Audio position: $audioPosition');
+
+          final delay = videoPosition - audioPosition;
+          print('Delay between video and audio: $delay');
+
+        });
 
         cubit.changInitializePlayerData(true);
       } catch (e) {
@@ -140,7 +158,7 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
 
   void _syncSeek() async {
     final currentPosition = _videoPlayerController.value.position;
-      await player.seek(currentPosition);
+    await player.seek(currentPosition);
 
   }
 
@@ -162,14 +180,31 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
           title: const Text('Select Video Quality'),
           content: DropdownButton<String>(
             value: cubit.selectedVideoQuality['quality'],
-            onChanged: (String? newQuality) {
+            onChanged: (String? newQuality) async {
               if (newQuality != null) {
-                player.stop();
-                player.dispose();
+                Navigator.of(context).pop();
+                Navigator.pop(context);
+                bool isFullScreen=false;
+                await player.stop();
+                await player.dispose();
+                await _videoPlayerController.pause();
+                await _videoPlayerController.dispose();
+                await _chewieController.pause();
+                if(_chewieController.isFullScreen) {
+                  isFullScreen=true;
+                  _chewieController.exitFullScreen();
+                }
+                 _chewieController.dispose();
+
                 cubit.changInitializePlayerData(false);
                 cubit.changeVideoQuality(newQuality);
-                _initializePlayer();
-                Navigator.of(context).pop();
+                await _initializePlayer().then((value) {
+
+                  if(isFullScreen){
+                    _chewieController.enterFullScreen();
+                  }
+                });
+
               }
             },
             items: uniqueQualities
@@ -214,27 +249,9 @@ class _PlayVideoFromYoutubeState extends State<PlayVideoFromYoutube> {
         return Scaffold(
           backgroundColor: Colors.black,
           body: cubit.fetchQuality && cubit.initializePlayerData
-              ? Stack(
-            children: [
-              Chewie(
+              ? Chewie(
                 controller: _chewieController,
-              ),
-              Positioned(
-                top: 30.0,
-                left: 10.0,
-                child: Material(
-                  color: Colors.transparent,
-                  child: IconButton(
-                    onPressed: () {
-                      _showQualityDropdown();
-                    },
-                    icon: const Icon(Icons.settings,
-                        color: Colors.white, size: 30.0),
-                  ),
-                ),
-              ),
-            ],
-          )
+              )
               : const Center(child: CircularProgressIndicator()),
         );
       },

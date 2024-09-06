@@ -35,6 +35,8 @@ class AppCubit extends Cubit<AppState> {
     showThumbnail=val;
     emit(ChangeShowThumbnailSuccessState());
   }
+
+
   Future<void> fetchVideoQualities(String videoUrl) async {
     emit(FetchVideoQualitiesLoadingState());
 
@@ -64,7 +66,6 @@ class AppCubit extends Cubit<AppState> {
         orElse: () => videoQualities.first,
       );
       selectedAudioQuality = manifest.audioOnly.first.url.toString();
-
       fetchQuality=true;
       emit(FetchVideoQualitiesSuccessState());
     } catch (e) {
